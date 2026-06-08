@@ -1,55 +1,51 @@
-#BANK MANAGEMENT SYSTEM
+# BANK MANAGEMENT SYSTEM
 
-import math
 import re
 import sys
 import secrets
 import string
-import random
 
 def generate_account_number():
-   return ''.join(secrets.choice(string.digits) for _ in range(10))
+    return ''.join(secrets.choice(string.digits) for _ in range(10))
 
 def generate_pin_number():
-   return ''.join(secrets.choice(string.digits) for _ in range(5))
-  
+    return ''.join(secrets.choice(string.digits) for _ in range(5))
 
 system_database = {}
 
 def safe_input(prompt):
     while True:
-       data_guard = input(prompt).strip()
-       if data_guard.lower() == 'quit':
-         print('Exiting the programme')
-         sys.exit()
+        data_guard = input(prompt).strip()
+        if data_guard.lower() == 'quit' or data_guard.lower() == 'q':
+            print('Exiting the program...')
+            sys.exit()
 
-       if data_guard == '':
-         print('Error, You need to enter something valid!')
-         continue
+        if data_guard == '':
+            print('Error: You need to enter something valid!')
+            continue
 
-       return data_guard
+        return data_guard
     
 def create_accounts():
     account_number = generate_account_number()
-
     pin_number = generate_pin_number()
 
     user_name = safe_input('Enter your name: ').title()
     while not re.fullmatch(r"[A-Za-z '-]+", user_name):
-       print("Name can't contain numbers and special characters!")
-       user_name = safe_input('Enter your name: ').title()
+        print("Name can't contain numbers or special characters!")
+        user_name = safe_input('Enter your name: ').title()
 
     user_surname = safe_input('Enter your surname: ').title()
     while not re.fullmatch(r"[A-Za-z '-]+", user_surname):
-     user_surname = safe_input('Enter your name: ').title()
+        print("Surname can't contain numbers or special characters!")
+        user_surname = safe_input('Enter your surname: ').title()
 
     identity_document = safe_input('Enter your official identity document number: ')
     while not identity_document.isdigit():
         print('ID must contain only numbers.')
         identity_document = safe_input('Enter your official identity document number: ')
         
-
-    user_id = safe_input('Your id: ')
+    user_id = safe_input('Your system user ID: ')
 
     account = {
         "account_id": account_number,
@@ -58,189 +54,183 @@ def create_accounts():
         "surname": user_surname,
         "id_doc": identity_document,
         "id": user_id,
-        "balance": 0,
+        "balance": 0.0,  # Changed to float for standard currency representation
         "active": True
     }
 
-    
-
     system_database[account_number] = account
 
-    print('ACCOUNT CREATED SUCCESSFULLY')
-    print(f"Account info: {account}")
+    print('\n' + '='*35)
+    print('ACCOUNT CREATED SUCCESSFULLY!')
+    print(f"Account Number : {account_number}")
+    print(f"Generated PIN   : {pin_number}")
+    print(f"Account Holder  : {user_name} {user_surname}")
+    print('='*35)
 
 def get_balance():
-  for user_id in system_database:
-    print(f"USER ID: {user_id}",'\n')
-    user_data = system_database[user_id]
-    print(f"USER NAME: {user_data['name']}")
-    print(f"USER SURNAME: {user_data['surname']}")
-    print(f"USER ID-DOCUMENT: {user_data['id_doc']}")
-    print(f"BALANCE: {user_data['balance']}")
-
-def deposit():
-  while True:
-
-     account_number = safe_input("Enter the account number: ")
-     if account_number in system_database:
-        print(f"ACCOUNT NUMBER: {account_number}")
-        user_data = system_database[account_number]
+    if not system_database:
+        print("\nNo accounts registered in the database yet.")
+        return
+        
+    for acc_num in system_database:
+        user_data = system_database[acc_num]
+        print(f"\nACCOUNT NUMBER: {acc_num}")
         print(f"USER NAME: {user_data['name']}")
         print(f"USER SURNAME: {user_data['surname']}")
         print(f"USER ID-DOCUMENT: {user_data['id_doc']}")
-        print(f"BALANCE: {user_data['balance']}")
+        print(f"BALANCE: R{user_data['balance']:.2f}")
+        print("-" * 20)
 
-        amount = safe_input("Enter the amount in RANDS or ('q to quit'): ")
-        total = user_data['balance']
-        amount = int(amount)
-        new_balance = total + amount
+def deposit():
+    while True:
+        account_number = safe_input("Enter the account number ('q' to cancel): ")
+        if account_number in system_database:
+            user_data = system_database[account_number]
+            print(f"\nACCOUNT FOUND: {user_data['name']} {user_data['surname']}")
+            print(f"CURRENT BALANCE: R{user_data['balance']:.2f}")
 
-        user_data['balance'] = new_balance
-        
-        print(f"Successfully deposited R{amount} into {account_number}")
-        print(f"NAME: {user_data['name']}")
-        print(f"SURNAME: {user_data['surname']}")
-        print(f"NEW BALANCE: R{user_data['balance']}")
+            while True:
+                amount_input = safe_input("Enter the amount in RANDS: ")
+                try:
+                    amount = float(amount_input)
+                    if amount <= 0:
+                        print("Amount must be greater than zero.")
+                        continue
+                    break
+                except ValueError:
+                    print("Invalid amount. Please enter a valid number.")
 
-        break
+            user_data['balance'] += amount
+            
+            print(f"\nSuccessfully deposited R{amount:.2f} into account {account_number}")
+            print(f"NEW BALANCE: R{user_data['balance']:.2f}")
+            break
+        else:
+            print("Account number not found. Please try again.")
 
 def withdraw():
-  while True:
-     account_number = safe_input("Enter the account number you want to withdraw from ('q to quit'): ")
-     if account_number in system_database:
-        print(f"ACCOUNT DETAILS: {account_number}, {user_data['name']} {user_data['surname']}")
-        attempts = 3
-        user_data = system_database[account_number]
-        while attempts > 0:
+    while True:
+        account_number = safe_input("Enter the account number to withdraw from ('q' to cancel): ")
+        if account_number in system_database:
+            user_data = system_database[account_number]
+            attempts = 3
             
-            pin_number = safe_input("Enter the pin code: ")  
-            if pin_number == user_data['pin']:
-                  print(f"BALANCE: {user_data['balance']}")
-                  try:
-                        withdrawal_amount = int(safe_input("Enter the withdrawal amount: "))
-                  except ValueError:
-                        print("Invalid amount. Please enter a number.")
-                        continue
-                  if withdrawal_amount > user_data['balance']:
-                     print('INSUFICIENT FUNDS!')
-                     
-                  else:
-                     new_balance = user_data['balance'] - withdrawal_amount
-                     print(f"SUCCESSFULLY WITHDRAWN {withdrawal_amount}")
-                     
-                     user_data['balance'] = new_balance
-                     print(f"BALANCE: R{user_data['balance']}")
-                     break
+            while attempts > 0:
+                pin_number = safe_input(f"Enter the pin code ({attempts} attempts left): ")  
+                if pin_number == user_data['pin']:
+                    print(f"CURRENT BALANCE: R{user_data['balance']:.2f}")
+                    
+                    while True:
+                        try:
+                            withdrawal_amount = float(safe_input("Enter the withdrawal amount: "))
+                            if withdrawal_amount <= 0:
+                                print("Amount must be greater than zero.")
+                                continue
+                            break
+                        except ValueError:
+                            print("Invalid amount. Please enter a number.")
+                    
+                    if withdrawal_amount > user_data['balance']:
+                        print('INSUFFICIENT FUNDS!')
+                    else:
+                        user_data['balance'] -= withdrawal_amount
+                        print(f"\nSUCCESSFULLY WITHDRAWN: R{withdrawal_amount:.2f}")
+                        print(f"NEW BALANCE: R{user_data['balance']:.2f}")
+                    return # Exit function completely on completion
+                else:
+                    print('Wrong PIN!')
+                    attempts -= 1
 
-            else:
-               print('Wrong pin!')
-               attempts -= 1
-
-        if attempts == 0:
-         print('You have exceeded the number of attempts!')
-         print('Account locked temporaly, visit your nearest branch.')
-
-     break
-   
+            if attempts == 0:
+                print('\nYou have exceeded the maximum number of attempts!')
+                print('Account locked temporarily. Visit your nearest branch.')
+                return
+        else:
+            print("Account number not found. Please try again.")
 
 def transfer():
-  while True:
-  
-      sender_account = safe_input("Enter the account to transfer from ('q to quit'): ")
-      if sender_account in system_database:
-         user_data = system_database[sender_account]
-         print(f"ACCOUNT NUMBER: {sender_account}")
-         print(f"NAME: {user_data['name']}")
-         print(f"SURNAME: {user_data['surname']}")
-         attempts = 3
-         
-         while attempts > 0:
-               user_pin = safe_input('Enter your pin number associated with the account number: ')
-               if user_pin == user_data['pin']:
-                  receiver_account = safe_input('Enter the destination account: ')
-                  if receiver_account in system_database:
-                     receiver_data = system_database[receiver_account]
-                     print(f"RECIEPIENT ACCOUNT: {receiver_account}, {receiver_data['name']} {receiver_data['surname']}")
-                     print('\n')
-                     try:
-                           amount = safe_input('Enter the amount to transfer: ')
-                           print('\n')
-                     except ValueError:
-                           print('Invalid amount please enter a valid number to continue')
-                           continue
-                     amount = float(amount)
-                     if amount > user_data['balance']:
-                              print('INSUFFICIENT FUNDS!')
-                     elif amount <= user_data['balance']:
-                              new_balance = user_data['balance'] - amount
-                              user_data['balance'] = new_balance
-                              print(f"SUCCESSFULLY TRANSFERRED: R{amount} to RECIEVER'S ACCOUNT {receiver_account}, {receiver_data['name']} {receiver_data['surname']}")
-                              
-                              print('\n')
-                              print(f"SENDERS ACCOUNT BALANCE: {new_balance}, {user_data['name']} {user_data['surname']}")
-                              print('\n')
-                              total = receiver_data['balance'] + amount
-                              receiver_data['balance'] = total
-                              print(f"New balance: {receiver_data['balance']}")
-                              print(f"RECIEVERS INFO: {receiver_account}{receiver_data['name']}")
-                              break
+    while True:
+        sender_account = safe_input("Enter the account to transfer from ('q' to cancel): ")
+        if sender_account in system_database:
+            user_data = system_database[sender_account]
+            attempts = 3
+            
+            while attempts > 0:
+                user_pin = safe_input(f"Enter your PIN ({attempts} attempts left): ")
+                if user_pin == user_data['pin']:
+                    
+                    while True:
+                        receiver_account = safe_input('Enter the destination account: ')
+                        if receiver_account == sender_account:
+                            print("You cannot transfer money to the same account.")
+                            continue
+                        if receiver_account in system_database:
+                            receiver_data = system_database[receiver_account]
+                            break
+                        print("Destination account not found. Try again.")
 
-                  else:
-                        print(f"Wrong pin, try again {attempts} attempts left")
-                        attempts -= 1
+                    print(f"\nRECIPIENT: {receiver_data['name']} {receiver_data['surname']}")
+                    
+                    while True:
+                        try:
+                            amount = float(safe_input('Enter the amount to transfer: '))
+                            if amount <= 0:
+                                print("Amount must be greater than zero.")
+                                continue
+                            break
+                        except ValueError:
+                            print('Invalid input. Please enter a valid numeric value.')
 
-      break
-                     
-        
-def exit_programm():
-  return
-
-#THE MANAGER FUNCTIONSMANAGEMENT SYSTEM CONTROL
-def toggle_account_status():
-  pass
-
-def audit_total_bank_value():
-  pass
-
-print('WELCOME TO THE BANKING SYSTEM')
-print('-----CHOOSE WHAT YOU NEED TO PERFOM HERE-----')
-print('\n')
+                    if amount > user_data['balance']:
+                        print('INSUFFICIENT FUNDS!')
+                    else:
+                        user_data['balance'] -= amount
+                        receiver_data['balance'] += amount
+                        
+                        print(f"\nSUCCESSFULLY TRANSFERRED: R{amount:.2f} to {receiver_data['name']} {receiver_data['surname']}")
+                        print(f"YOUR NEW BALANCE: R{user_data['balance']:.2f}")
+                    return
+                else:
+                    print("Wrong PIN.")
+                    attempts -= 1
+            
+            if attempts == 0:
+                print('Too many incorrect PIN attempts. Security lock engaged.')
+                return
+        else:
+            print("Sender account not found.")
 
 def print_menu():
-    print("\n------MENU------")
-    print("\n")
-    print(f"1. CREATE ACCOUNT")
-    print(f"2. VIEW BALANCES")
-    print(f"3. DEPOSIT MONEY")
-    print(f"4. WITHDRAW CASH")
-    print(f"5. TRANSFER MONEY")
-    print(f"6. EXIT")
+    print("\n" + "="*15 + " MENU " + "="*15)
+    print("1. CREATE ACCOUNT")
+    print("2. VIEW BALANCES")
+    print("3. DEPOSIT MONEY")
+    print("4. WITHDRAW CASH")
+    print("5. TRANSFER MONEY")
+    print("6. EXIT")
+    print("=" * 36)
+
+# --- MAIN EXECUTION LOOP ---
+print('WELCOME TO THE BANKING SYSTEM')
 
 while True:
-   print_menu()
-
-   print('\n')
-   choice = safe_input("select from the menu: ")
-   if choice not in ['1', '2', '3', '4', '5', '6']:
-      print('Wrong selection, choose from the `menu-option`')
-      continue
-
-   if choice == '1':
-      create_accounts()
-
-   elif choice == '2':
-      print('\n')
-      get_balance()
-
-   elif choice == '3':
-      deposit()
+    print_menu()
+    choice = safe_input("Select an option from the menu: ")
     
-   elif choice == '4':
-      withdraw()
-    
-   elif choice == '5':
-      transfer()
+    if choice not in ['1', '2', '3', '4', '5', '6']:
+        print('Wrong selection, please choose a valid menu-option.')
+        continue
 
-   elif choice == '6':
-      print('THANKS FOR USING OUR SERVICES, GOODBYE!')
-      break
+    if choice == '1':
+        create_accounts()
+    elif choice == '2':
+        get_balance()
+    elif choice == '3':
+        deposit()
+    elif choice == '4':
+        withdraw()
+    elif choice == '5':
+        transfer()
+    elif choice == '6':
+        print('\nTHANKS FOR USING OUR SERVICES, GOODBYE!')
+        break
